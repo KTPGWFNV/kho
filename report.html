@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>DATA NHẬP XUẤT</title>
-<link rel="icon" type="image/png" href="logo.png">
+<link rel="icon" type="image/png" href="icon.png">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 
@@ -55,8 +55,25 @@ cursor:pointer;
 .loginBox button:hover{
 background:#0864b1;
 }
+.statBox{
+width:700px;
+margin:0 auto 12px auto;
+background:white;
+padding:10px;
+border-radius:8px;
+box-shadow:0 2px 6px rgba(0,0,0,0.15);
+}
 
+#statTable{
+width:700px;
+border-collapse:collapse;
+}
 
+#statTable th,
+#statTable td{
+padding:8px 4px;
+font-size:14px;
+}
 /* ======================
    BOX
 ====================== */
@@ -146,9 +163,13 @@ opacity:0.9;
   position: sticky;
   bottom: 0;
   z-index: 5;
-  background: #ffeaa7;
+  background: #ffeaa7 !important;
 }
-/* ======================
+
+#tableBaoCao .tongRow td{
+  background: #ffeaa7 !important;
+  font-weight:bold;
+}/* ======================
    TAB
 ====================== */
 
@@ -332,11 +353,6 @@ Tổng thùng: 0
 
     <h2>📦 HÀNG TỒN</h2>
 
-    <div class="box">
-      <h3>📊 THỐNG KÊ THÙNG</h3>
-      <table id="statTable"></table>
-    </div>
-
     <button onclick="downloadExcel(getTonData(),'DATA_TON')">
       ⬇️ Tải Excel
     </button>
@@ -353,11 +369,32 @@ Tổng thùng: 0
 </div> <!-- 👈 ĐÓNG TAB TỒN Ở ĐÂY -->
 
 
-
 <!-- ✅ TAB BÁO CÁO (ĐẶT NGOÀI) -->
 <div id="baocao" class="tab">
   <div class="box">
     <h2>📊 BÁO CÁO</h2>
+
+ <div class="statBox">
+  <table id="statTable"></table>
+</div>
+<input
+id="searchBaoCao"
+type="text"
+placeholder="🔍 Tìm mã hoặc tên hàng..."
+style="
+width:300px;
+padding:8px;
+margin-bottom:10px;
+border:1px solid #ccc;
+border-radius:6px;
+"
+oninput="renderBaoCao()"
+>
+<label style="margin-left:10px;">
+  <input type="checkbox" id="showHetTon"
+  onchange="renderBaoCao()">
+  Hiện mã hết tồn
+</label>
 <button onclick="downloadBaoCaoExcel()">
 ⬇️ Tải Excel
 </button>
@@ -443,8 +480,11 @@ table.innerHTML = "";
 let cols = [
 "MÃ HÀNG","TÊN HÀNG",
 "BOX VN","BOX TQ","BOX HQ",
-"NHẬP TQ","NHẬP HQ",
-"XUẤT TQ","XUẤT HQ",
+
+"NHẬP TQ","NHẬP HQ","TỔNG NHẬP",
+
+"XUẤT TQ","XUẤT HQ","TỔNG XUẤT",
+
 "TỒN TQ","TỒN HQ",
 "TỔNG TỒN"
 ];
@@ -459,6 +499,11 @@ header.appendChild(th);
 // ===== MAP =====
 let map = {};
 let idCount = {};
+
+let keyword =
+document.getElementById("searchBaoCao")?.value
+.toLowerCase()
+.trim() || "";
 
 tonData.forEach(row=>{
   idCount[row.id] = (idCount[row.id] || 0) + 1;
@@ -530,20 +575,45 @@ addData(xuatData,"XUAT");
 // ===== RENDER =====
 
 let totalSum = {
-boxVN:0,boxTQ:0,boxHQ:0,
-tonTQ:0,tonHQ:0,total:0
+boxVN:0,
+boxTQ:0,
+boxHQ:0,
+
+tongNhap:0,
+tongXuat:0,
+
+tonTQ:0,
+tonHQ:0,
+total:0
 };
 
-Object.entries(map).forEach(([ma,x])=>{
+Object.entries(map)
+.sort((a,b)=> a[0].localeCompare(b[0], 'vi'))
+.forEach(([ma,x])=>{
+
+if(
+!ma.toLowerCase().includes(keyword) &&
+!x.ten.toLowerCase().includes(keyword)
+){
+return;
+}
 // 🔥 bỏ dòng không có thùng
-if(x.boxVN.size === 0 && x.boxTQ.size === 0 && x.boxHQ.size === 0){
+let showHetTon =
+document.getElementById("showHetTon")?.checked;
+
+if(
+!showHetTon &&
+x.boxVN.size === 0 &&
+x.boxTQ.size === 0 &&
+x.boxHQ.size === 0
+){
   return;
 }
-
 let tonTQ = x.nhapTQ - x.xuatTQ;
 let tonHQ = x.nhapHQ - x.xuatHQ;
 let total = tonTQ + tonHQ;
-
+let tongNhap = x.nhapTQ + x.nhapHQ;
+let tongXuat = x.xuatTQ + x.xuatHQ;
 let r = table.insertRow();
 
 r.insertCell().innerText = ma;
@@ -556,8 +626,16 @@ r.insertCell().innerText = x.boxHQ.size || "";
 r.insertCell().innerText = x.nhapTQ.toLocaleString('vi-VN');
 r.insertCell().innerText = x.nhapHQ.toLocaleString('vi-VN');
 
+let tdTongNhap = r.insertCell();
+tdTongNhap.innerText = tongNhap.toLocaleString('vi-VN');
+tdTongNhap.style.background = "#f1f2f6";
+
 r.insertCell().innerText = x.xuatTQ.toLocaleString('vi-VN');
 r.insertCell().innerText = x.xuatHQ.toLocaleString('vi-VN');
+
+let tdTongXuat = r.insertCell();
+tdTongXuat.innerText = tongXuat.toLocaleString('vi-VN');
+tdTongXuat.style.background = "#f1f2f6";
 
 r.insertCell().innerText = tonTQ.toLocaleString('vi-VN');
 r.insertCell().innerText = tonHQ.toLocaleString('vi-VN');
@@ -568,6 +646,8 @@ r.insertCell().innerText = total.toLocaleString('vi-VN');
 totalSum.boxVN += x.boxVN.size;
 totalSum.boxTQ += x.boxTQ.size;
 totalSum.boxHQ += x.boxHQ.size;
+totalSum.tongNhap += tongNhap;
+totalSum.tongXuat += tongXuat;
 totalSum.tonTQ += tonTQ;
 totalSum.tonHQ += tonHQ;
 totalSum.total += total;
@@ -592,8 +672,21 @@ r.insertCell().innerText = totalSum.boxHQ;
 r.insertCell().innerText = "";
 r.insertCell().innerText = "";
 
+let tongNhapCell = r.insertCell();
+tongNhapCell.innerText =
+totalSum.tongNhap.toLocaleString('vi-VN');
+
+tongNhapCell.style.background="#dfe6e9";
+
 r.insertCell().innerText = "";
 r.insertCell().innerText = "";
+
+let tongXuatCell = r.insertCell();
+tongXuatCell.innerText =
+Object.values(map)
+.reduce((a,x)=>a+x.xuatTQ+x.xuatHQ,0)
+.toLocaleString('vi-VN');
+tongXuatCell.style.background="#dfe6e9";
 
 r.insertCell().innerText = totalSum.tonTQ.toLocaleString('vi-VN');
 r.insertCell().innerText = totalSum.tonHQ.toLocaleString('vi-VN');
