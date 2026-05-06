@@ -94,10 +94,15 @@ overflow-y:auto;
 .tableWrap th{
 position:sticky;
 top:0;
-background:white;
 z-index:5;
 }
-
+#tableTon th,
+#tableNhap th,
+#tableXuat th{
+background: linear-gradient(135deg, #2d3436, #636e72) !important;
+color: #fff !important;
+font-weight: bold;
+}
 table{
 border-collapse:collapse;
 width:100%;
@@ -112,8 +117,36 @@ text-align:center;
 tr:nth-child(even){
 background:#fafafa;
 }
+th{
+background: linear-gradient(135deg, #6c5ce7, #0984e3);
+color: white;
+font-weight: bold;
+text-transform: uppercase;
+padding:8px;
+border:1px solid #ddd;
+}
 
+th:first-child{
+border-top-left-radius:8px;
+}
 
+th:last-child{
+border-top-right-radius:8px;
+}
+#statTable th{
+background: linear-gradient(135deg, #00b894, #55efc4);
+color: #003d2e;
+font-size: 14px;
+}
+th:hover{
+opacity:0.9;
+}
+#tableBaoCao .tongRow{
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  background: #ffeaa7;
+}
 /* ======================
    TAB
 ====================== */
@@ -216,6 +249,11 @@ onclick="showTab('ton',this)">
 📦 Tồn
 </button>
 
+<button class="tabBtn"
+onclick="showTab('baocao',this)">
+📊 Báo cáo
+</button>
+
 <button onclick="loadAllData()">
 🔄 Load dữ liệu
 </button>
@@ -255,9 +293,7 @@ Tổng thùng: 0
 </div>
 
 </div>
-
 </div>
-
 
 <!-- ======================
        TAB XUẤT
@@ -284,7 +320,6 @@ Tổng thùng: 0
 
 </div>
 
-</div>
 
 <!-- ======================
        TAB TỒN
@@ -292,32 +327,46 @@ Tổng thùng: 0
 
 <div id="ton" class="tab">
 
-<div class="box">
+  <div class="box">
 
-<h2>📦 HÀNG TỒN</h2>
-<div class="box">
-<h3>📊 THỐNG KÊ THÙNG</h3>
-<table id="statTable"></table>
-</div>
+    <h2>📦 HÀNG TỒN</h2>
 
-<button onclick="downloadExcel(getTonData(),'DATA_TON')">
+    <div class="box">
+      <h3>📊 THỐNG KÊ THÙNG</h3>
+      <table id="statTable"></table>
+    </div>
+
+    <button onclick="downloadExcel(getTonData(),'DATA_TON')">
+      ⬇️ Tải Excel
+    </button>
+
+    <h3 id="totalTon">
+      Tổng thùng tồn: 0
+    </h3>
+
+    <div class="tableWrap">
+      <table id="tableTon"></table>
+    </div>
+
+  </div>
+</div> <!-- 👈 ĐÓNG TAB TỒN Ở ĐÂY -->
+
+
+
+<!-- ✅ TAB BÁO CÁO (ĐẶT NGOÀI) -->
+<div id="baocao" class="tab">
+  <div class="box">
+    <h2>📊 BÁO CÁO</h2>
+<button onclick="downloadBaoCaoExcel()">
 ⬇️ Tải Excel
 </button>
-<h3 id="totalTon">
-Tổng thùng tồn: 0
-</h3>
 
-<div class="tableWrap">
-<table id="tableTon"></table>
+    <div class="tableWrap">
+      <table id="tableBaoCao"></table>
+    </div>
+  </div>
 </div>
-
-</div>
-
-</div>
-</div>
-
 <script>
-
 // ======================
 // USERS LOGIN
 // ======================
@@ -380,39 +429,175 @@ loadAllData();
 // TÍNH HÀNG TỒN
 // ======================
 
-function renderTon(){
+function renderBaoCao(){
 
-// lấy danh sách ID đã xuất
+let tonData = getTonData();   // tồn
+let nhapData = dataNhap;
+let xuatData = dataXuat;
 
-let exportedIDs =
-new Set(dataXuat.map(x=>x.id));
+let table = document.getElementById("tableBaoCao");
+table.innerHTML = "";
 
+// HEADER
+let cols = [
+"MÃ HÀNG","TÊN HÀNG",
+"BOX VN","BOX TQ","BOX HQ",
+"NHẬP TQ","NHẬP HQ",
+"XUẤT TQ","XUẤT HQ",
+"TỒN TQ","TỒN HQ",
+"TỔNG TỒN"
+];
 
-// lọc ID chưa xuất
+let header = table.insertRow();
+cols.forEach(c=>{
+let th = document.createElement("th");
+th.innerText = c;
+header.appendChild(th);
+});
 
-let tonData =
-dataNhap.filter(x=>
-!exportedIDs.has(x.id)
-);
+// ===== MAP =====
+let map = {};
+let idCount = {};
 
+tonData.forEach(row=>{
+  idCount[row.id] = (idCount[row.id] || 0) + 1;
+});
+function addData(data,type){
 
-// render bảng tồn
+data.forEach(row=>{
 
-renderTable(
-tonData,
-"tableTon",
-"totalTon"
-);
-renderStats(tonData);
+let key = row.ma;
+let note = (row.note||"").toUpperCase();
+
+let qty = Object.values(row.sizes||{})
+.reduce((a,b)=>a+(Number(b)||0),0);
+
+if(!map[key]){
+map[key] = {
+ten: row.ten,
+
+boxVN:new Set(),
+boxTQ:new Set(),
+boxHQ:new Set(),
+
+nhapTQ:0, nhapHQ:0,
+xuatTQ:0, xuatHQ:0
+};
 }
-function getTonData(){
 
-let exportedIDs =
-new Set(dataXuat.map(x=>x.id));
+if(type==="TON"){
 
-return dataNhap.filter(x=>
-!exportedIDs.has(x.id)
-);
+  // 🔥 bỏ thùng MIX (ID có nhiều dòng)
+  if(idCount[row.id] > 1) return;
+
+  if(note.includes("CHINA")){
+    map[key].boxTQ.add(row.id);
+  }
+  else if(note.includes("VIET")){
+    map[key].boxVN.add(row.id);
+  }
+  else{
+    map[key].boxHQ.add(row.id);
+  }
+
+}// ===== NHẬP
+if(type==="NHAP"){
+if(note.includes("CHINA") || note.includes("VIET")){
+map[key].nhapTQ += qty;
+}else{
+map[key].nhapHQ += qty;
+}
+}
+
+// ===== XUẤT
+if(type==="XUAT"){
+if(note.includes("CHINA") || note.includes("VIET")){
+map[key].xuatTQ += qty;
+}else{
+map[key].xuatHQ += qty;
+}
+}
+
+});
+}
+
+// chạy
+addData(tonData,"TON");
+addData(nhapData,"NHAP");
+addData(xuatData,"XUAT");
+
+// ===== RENDER =====
+
+let totalSum = {
+boxVN:0,boxTQ:0,boxHQ:0,
+tonTQ:0,tonHQ:0,total:0
+};
+
+Object.entries(map).forEach(([ma,x])=>{
+// 🔥 bỏ dòng không có thùng
+if(x.boxVN.size === 0 && x.boxTQ.size === 0 && x.boxHQ.size === 0){
+  return;
+}
+
+let tonTQ = x.nhapTQ - x.xuatTQ;
+let tonHQ = x.nhapHQ - x.xuatHQ;
+let total = tonTQ + tonHQ;
+
+let r = table.insertRow();
+
+r.insertCell().innerText = ma;
+r.insertCell().innerText = x.ten;
+
+r.insertCell().innerText = x.boxVN.size || "";
+r.insertCell().innerText = x.boxTQ.size || "";
+r.insertCell().innerText = x.boxHQ.size || "";
+
+r.insertCell().innerText = x.nhapTQ.toLocaleString('vi-VN');
+r.insertCell().innerText = x.nhapHQ.toLocaleString('vi-VN');
+
+r.insertCell().innerText = x.xuatTQ.toLocaleString('vi-VN');
+r.insertCell().innerText = x.xuatHQ.toLocaleString('vi-VN');
+
+r.insertCell().innerText = tonTQ.toLocaleString('vi-VN');
+r.insertCell().innerText = tonHQ.toLocaleString('vi-VN');
+
+r.insertCell().innerText = total.toLocaleString('vi-VN');
+
+// cộng tổng
+totalSum.boxVN += x.boxVN.size;
+totalSum.boxTQ += x.boxTQ.size;
+totalSum.boxHQ += x.boxHQ.size;
+totalSum.tonTQ += tonTQ;
+totalSum.tonHQ += tonHQ;
+totalSum.total += total;
+
+});
+
+// ===== DÒNG TỔNG =====
+
+let r = table.insertRow();
+
+r.classList.add("tongRow"); // 👈 thêm dòng này
+
+r.style.fontWeight = "bold";
+r.style.background = "#ffeaa7";
+r.insertCell().innerText = "TỔNG";
+r.insertCell().innerText = "";
+
+r.insertCell().innerText = totalSum.boxVN;
+r.insertCell().innerText = totalSum.boxTQ;
+r.insertCell().innerText = totalSum.boxHQ;
+
+r.insertCell().innerText = "";
+r.insertCell().innerText = "";
+
+r.insertCell().innerText = "";
+r.insertCell().innerText = "";
+
+r.insertCell().innerText = totalSum.tonTQ.toLocaleString('vi-VN');
+r.insertCell().innerText = totalSum.tonHQ.toLocaleString('vi-VN');
+
+r.insertCell().innerText = totalSum.total.toLocaleString('vi-VN');
 
 }
 // ======================
@@ -503,7 +688,7 @@ dataXuat,
 // ⭐ QUAN TRỌNG: đặt ở đây
 
 renderTon();
-
+renderBaoCao();
 
 loading.innerText = "✅ Đã load xong";
 
@@ -524,7 +709,17 @@ console.log(err);
 }
 
 }
+function renderTon(){
 
+let tonData = getTonData();
+
+// render bảng tồn
+renderTable(tonData,"tableTon","totalTon");
+
+// thống kê
+renderStats(tonData);
+
+}
 function renderStats(data){
 
 // đếm số dòng mỗi ID
@@ -591,11 +786,11 @@ header.appendChild(th);
 
 let row = table.insertRow();
 
-row.insertCell().innerText = stats["CHINA"]||0;
-row.insertCell().innerText = stats["VIETNAM"]||0;
-row.insertCell().innerText = stats["KOREA"]||0;
-row.insertCell().innerText = stats["MIX SIZE"]||0;
-row.insertCell().innerText = total;
+row.insertCell().innerText = (stats["CHINA"]||0).toLocaleString('vi-VN');
+row.insertCell().innerText = (stats["VIETNAM"]||0).toLocaleString('vi-VN');
+row.insertCell().innerText = (stats["KOREA"]||0).toLocaleString('vi-VN');
+row.insertCell().innerText = (stats["MIX SIZE"]||0).toLocaleString('vi-VN');
+row.insertCell().innerText = total.toLocaleString('vi-VN');
 
 }
 // ======================
@@ -758,6 +953,51 @@ let wb = XLSX.utils.book_new();
 XLSX.utils.book_append_sheet(wb, ws, "DATA");
 
 XLSX.writeFile(wb, fileName + ".xlsx");
+
+}
+function getTonData(){
+
+let xuatIDs = new Set(dataXuat.map(x=>x.id));
+
+return dataNhap.filter(x=> !xuatIDs.has(x.id));
+
+}
+function downloadBaoCaoExcel(){
+
+let table = document.getElementById("tableBaoCao");
+
+if(!table || table.rows.length === 0){
+alert("Không có dữ liệu!");
+return;
+}
+
+let data = [];
+
+// lấy header
+let headers = [];
+for(let i=0;i<table.rows[0].cells.length;i++){
+headers.push(table.rows[0].cells[i].innerText);
+}
+
+// lấy data
+for(let i=1;i<table.rows.length;i++){
+
+let row = {};
+for(let j=0;j<headers.length;j++){
+row[headers[j]] = table.rows[i].cells[j].innerText;
+}
+
+data.push(row);
+
+}
+
+// tạo excel
+let ws = XLSX.utils.json_to_sheet(data, { header: headers });
+let wb = XLSX.utils.book_new();
+
+XLSX.utils.book_append_sheet(wb, ws, "BAO_CAO");
+
+XLSX.writeFile(wb, "BAO_CAO.xlsx");
 
 }
 </script>
