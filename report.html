@@ -56,14 +56,8 @@ cursor:pointer;
 background:#0864b1;
 }
 .statBox{
-width:700px;
-margin:0 auto 12px auto;
-background:white;
-padding:10px;
-border-radius:8px;
-box-shadow:0 2px 6px rgba(0,0,0,0.15);
+margin-top:-10px;
 }
-
 #statTable{
 width:700px;
 border-collapse:collapse;
@@ -86,33 +80,18 @@ border-radius:8px;
 box-shadow:0 2px 6px rgba(0,0,0,0.15);
 }
 
-
-/* ======================
-   HEADER FIXED
-====================== */
-
-.headerFixed{
-position:sticky;
-top:0;
-z-index:999;
-background:#f5f5f5;
-padding-bottom:5px;
-}
-
-
 /* ======================
    TABLE
 ====================== */
 
 .tableWrap{
-max-height:70vh;
-overflow-y:auto;
+max-height:calc(100vh - 220px);
+overflow:auto;
 }
-
 .tableWrap th{
 position:sticky;
 top:0;
-z-index:5;
+z-index:2;
 }
 #tableTon th,
 #tableNhap th,
@@ -195,8 +174,126 @@ background:#dfe6e9;
 background:#0984e3;
 color:white;
 }
+.pagination{
+display:flex;
+justify-content:center;
+align-items:center;
+gap:6px;
+padding:12px 0;
+flex-wrap:wrap;
+}
 
+.pagination button{
+min-width:34px;
+height:34px;
+border:none;
+border-radius:8px;
+background:#dfe6e9;
+cursor:pointer;
+font-weight:bold;
+transition:0.2s;
+}
 
+.pagination button:hover{
+background:#74b9ff;
+color:white;
+}
+
+.pagination button.active{
+background:#0984e3;
+color:white;
+}
+/* KHUNG CỐ ĐỊNH TOÀN BỘ */
+
+.stickyWrap{
+position:sticky;
+top:0;
+z-index:9999;
+background:#f5f5f5;
+padding-bottom:8px;
+box-shadow:0 2px 8px rgba(0,0,0,0.08);
+}
+
+/* menu trên */
+
+.headerFixed{
+padding:8px 10px;
+margin-bottom:8px;
+}
+
+/* top content */
+
+.topBar{
+padding:0 10px;
+}
+
+/* table */
+
+.tableWrap{
+max-height:calc(100vh - 260px);
+overflow:auto;
+}
+/* THU GỌN */
+.topBar h2{
+margin:4px 0;
+font-size:20px;
+}
+
+.topBar h3{
+margin:4px 0;
+font-size:16px;
+}
+
+.topBar button{
+padding:5px 10px;
+font-size:13px;
+}
+
+.topBar .searchBox,
+.topBar input[type="text"]{
+padding:5px 8px;
+height:32px;
+}
+
+.topBar .pagination{
+padding:6px 0;
+}
+.baoCaoTools{
+display:flex;
+align-items:center;
+gap:12px;
+margin-bottom:10px;
+flex-wrap:wrap;
+}
+
+.baoCaoTools input[type="text"]{
+width:320px;
+padding:8px;
+border:1px solid #ccc;
+border-radius:6px;
+}
+
+.baoCaoTools label{
+display:flex;
+align-items:center;
+gap:6px;
+white-space:nowrap;
+}
+.topBar{
+display:flex;
+align-items:flex-end;
+gap:20px;
+flex-wrap:wrap;
+}
+
+.statBox{
+margin:0;
+flex-shrink:0;
+}
+
+.baoCaoTools{
+margin-bottom:0;
+}
 /* ======================
    LOADING
 ====================== */
@@ -254,6 +351,8 @@ placeholder="Mật khẩu">
 <div id="mainApp" style="display:none;">
 
 
+<div class="stickyWrap">
+
 <div class="headerFixed box">
 
 <button class="tabBtn"
@@ -290,7 +389,7 @@ onclick="showTab('baocao',this)">
 <div id="loading" class="loading">
 ⏳ Đang load dữ liệu...
 </div>
-
+</div>
 
 <!-- ======================
        TAB NHẬP
@@ -299,7 +398,7 @@ onclick="showTab('baocao',this)">
 <div id="nhap" class="tab">
 
 <div class="box">
-
+<div class="topBar">
 <h2>📥 DATA NHẬP</h2>
 
 <button onclick="downloadExcel(dataNhap,'DATA_NHAP')">
@@ -309,11 +408,11 @@ onclick="showTab('baocao',this)">
 <h3 id="totalNhap">
 Tổng thùng: 0
 </h3>
-
+</div>
 <div class="tableWrap">
 <table id="tableNhap"></table>
 </div>
-
+<div id="paginationNhap" class="pagination"></div>
 </div>
 </div>
 
@@ -324,7 +423,7 @@ Tổng thùng: 0
 <div id="xuat" class="tab">
 
 <div class="box">
-
+<div class="topBar">
 <h2>📤 DATA XUẤT</h2>
 <button onclick="downloadExcel(dataXuat,'DATA_XUAT')">
 ⬇️ Tải Excel
@@ -333,11 +432,11 @@ Tổng thùng: 0
 <h3 id="totalXuat">
 Tổng thùng: 0
 </h3>
-
+</div>
 <div class="tableWrap">
 <table id="tableXuat"></table>
 </div>
-
+<div id="paginationXuat" class="pagination"></div>
 </div>
 
 </div>
@@ -349,8 +448,8 @@ Tổng thùng: 0
 
 <div id="ton" class="tab">
 
-  <div class="box">
-
+<div class="box">
+<div class="topBar">
     <h2>📦 HÀNG TỒN</h2>
 
     <button onclick="downloadExcel(getTonData(),'DATA_TON')">
@@ -360,11 +459,11 @@ Tổng thùng: 0
     <h3 id="totalTon">
       Tổng thùng tồn: 0
     </h3>
-
+</div>
     <div class="tableWrap">
       <table id="tableTon"></table>
     </div>
-
+<div id="paginationTon" class="pagination"></div>
   </div>
 </div> <!-- 👈 ĐÓNG TAB TỒN Ở ĐÂY -->
 
@@ -372,39 +471,45 @@ Tổng thùng: 0
 <!-- ✅ TAB BÁO CÁO (ĐẶT NGOÀI) -->
 <div id="baocao" class="tab">
   <div class="box">
-    <h2>📊 BÁO CÁO</h2>
+<div class="topBar">
 
- <div class="statBox">
+<div class="statBox">
   <table id="statTable"></table>
 </div>
+
+<div class="baoCaoTools">
+
 <input
 id="searchBaoCao"
 type="text"
 placeholder="🔍 Tìm mã hoặc tên hàng..."
-style="
-width:300px;
-padding:8px;
-margin-bottom:10px;
-border:1px solid #ccc;
-border-radius:6px;
-"
 oninput="renderBaoCao()"
 >
-<label style="margin-left:10px;">
-  <input type="checkbox" id="showHetTon"
+
+<label>
+  <input type="checkbox"
+  id="showHetTon"
   onchange="renderBaoCao()">
   Hiện mã hết tồn
 </label>
+
 <button onclick="downloadBaoCaoExcel()">
 ⬇️ Tải Excel
 </button>
 
-    <div class="tableWrap">
+</div>
+
+</div>    <div class="tableWrap">
       <table id="tableBaoCao"></table>
     </div>
   </div>
 </div>
 <script>
+let currentPageNhap = 1;
+let currentPageXuat = 1;
+let currentPageTon = 1;
+
+const ROWS_PER_PAGE = 50;
 // ======================
 // USERS LOGIN
 // ======================
@@ -682,10 +787,10 @@ r.insertCell().innerText = "";
 r.insertCell().innerText = "";
 
 let tongXuatCell = r.insertCell();
+
 tongXuatCell.innerText =
-Object.values(map)
-.reduce((a,x)=>a+x.xuatTQ+x.xuatHQ,0)
-.toLocaleString('vi-VN');
+totalSum.tongXuat.toLocaleString('vi-VN');
+
 tongXuatCell.style.background="#dfe6e9";
 
 r.insertCell().innerText = totalSum.tonTQ.toLocaleString('vi-VN');
@@ -760,9 +865,17 @@ await resNhap.json();
 renderTable(
 dataNhap,
 "tableNhap",
-"totalNhap"
+"totalNhap",
+currentPageNhap
 );
 
+renderPagination(
+dataNhap,
+"paginationNhap",
+"tableNhap",
+"totalNhap",
+"nhap"
+);
 
 // LOAD XUẤT
 
@@ -775,7 +888,16 @@ await resXuat.json();
 renderTable(
 dataXuat,
 "tableXuat",
-"totalXuat"
+"totalXuat",
+currentPageXuat
+);
+
+renderPagination(
+dataXuat,
+"paginationXuat",
+"tableXuat",
+"totalXuat",
+"xuat"
 );
 
 
@@ -808,7 +930,21 @@ function renderTon(){
 let tonData = getTonData();
 
 // render bảng tồn
-renderTable(tonData,"tableTon","totalTon");
+renderTable(
+tonData,
+"tableTon",
+"totalTon",
+currentPageTon
+);
+
+// pagination
+renderPagination(
+tonData,
+"paginationTon",
+"tableTon",
+"totalTon",
+"ton"
+);
 
 // thống kê
 renderStats(tonData);
@@ -891,7 +1027,7 @@ row.insertCell().innerText = total.toLocaleString('vi-VN');
 // RENDER TABLE
 // ======================
 
-function renderTable(data,tableID,totalID){
+function renderTable(data,tableID,totalID,page=1){
 
 let table=
 document.getElementById(tableID);
@@ -900,7 +1036,10 @@ table.innerHTML="";
 
 if(data.length===0)
 return;
+let start = (page - 1) * ROWS_PER_PAGE;
+let end = start + ROWS_PER_PAGE;
 
+let pageData = data.slice(start,end);
 
 // HEADER
 
@@ -944,11 +1083,11 @@ idCount[row.id] = (idCount[row.id] || 0) + 1;
 let renderedID = new Set();
 let renderedThung = new Set(); 
 
-data.forEach((row,index)=>{
+pageData.forEach((row,index)=>{
 
 let tr=table.insertRow();
 
-tr.insertCell().innerText=index+1;
+tr.insertCell().innerText=start + index + 1;
 tr.insertCell().innerText=row.note || "";
 
 // ID merge
@@ -1092,6 +1231,143 @@ let wb = XLSX.utils.book_new();
 XLSX.utils.book_append_sheet(wb, ws, "BAO_CAO");
 
 XLSX.writeFile(wb, "BAO_CAO.xlsx");
+
+}
+function renderPagination(
+data,
+containerID,
+tableID,
+totalID,
+type
+){
+
+let totalPages =
+Math.ceil(data.length / ROWS_PER_PAGE);
+
+let currentPage;
+
+if(type==="nhap"){
+currentPage = currentPageNhap;
+}
+
+if(type==="xuat"){
+currentPage = currentPageXuat;
+}
+
+if(type==="ton"){
+currentPage = currentPageTon;
+}
+
+let div =
+document.getElementById(containerID);
+
+div.innerHTML = "";
+
+// PREV
+if(currentPage > 1){
+
+let prev = document.createElement("button");
+
+prev.innerText = "<";
+
+prev.onclick = ()=>{
+
+if(type==="nhap"){
+currentPageNhap--;
+renderTable(data,tableID,totalID,currentPageNhap);
+renderPagination(data,containerID,tableID,totalID,type);
+}
+
+if(type==="xuat"){
+currentPageXuat--;
+renderTable(data,tableID,totalID,currentPageXuat);
+renderPagination(data,containerID,tableID,totalID,type);
+}
+if(type==="ton"){
+currentPageTon--;
+renderTable(data,tableID,totalID,currentPageTon);
+renderPagination(data,containerID,tableID,totalID,type);
+}
+};
+
+div.appendChild(prev);
+
+}
+
+// PAGE
+for(
+let i=Math.max(1,currentPage-2);
+i<=Math.min(totalPages,currentPage+2);
+i++
+){
+
+let btn = document.createElement("button");
+
+btn.innerText = i;
+
+if(i===currentPage){
+btn.classList.add("active");
+}
+
+btn.onclick = ()=>{
+
+if(type==="nhap"){
+currentPageNhap=i;
+renderTable(data,tableID,totalID,i);
+}
+
+if(type==="xuat"){
+currentPageXuat=i;
+renderTable(data,tableID,totalID,i);
+}
+if(type==="ton"){
+currentPageTon=i;
+renderTable(data,tableID,totalID,i);
+}
+renderPagination(
+data,
+containerID,
+tableID,
+totalID,
+type
+);
+
+};
+
+div.appendChild(btn);
+
+}
+
+// NEXT
+if(currentPage < totalPages){
+
+let next = document.createElement("button");
+
+next.innerText = ">";
+
+next.onclick = ()=>{
+
+if(type==="nhap"){
+currentPageNhap++;
+renderTable(data,tableID,totalID,currentPageNhap);
+renderPagination(data,containerID,tableID,totalID,type);
+}
+
+if(type==="xuat"){
+currentPageXuat++;
+renderTable(data,tableID,totalID,currentPageXuat);
+renderPagination(data,containerID,tableID,totalID,type);
+}
+if(type==="ton"){
+currentPageTon++;
+renderTable(data,tableID,totalID,currentPageTon);
+renderPagination(data,containerID,tableID,totalID,type);
+}
+};
+
+div.appendChild(next);
+
+}
 
 }
 </script>
