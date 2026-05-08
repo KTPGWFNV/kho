@@ -79,7 +79,10 @@ margin-bottom:10px;
 border-radius:8px;
 box-shadow:0 2px 6px rgba(0,0,0,0.15);
 }
-
+#baocao{
+margin:0;
+padding:0;
+}
 /* ======================
    TABLE
 ====================== */
@@ -294,6 +297,112 @@ flex-shrink:0;
 .baoCaoTools{
 margin-bottom:0;
 }
+@media print {
+html,body{
+height:auto !important;
+overflow:visible !important;
+}
+@page{
+margin:10mm;
+size:auto;
+}
+body > *{
+display:none !important;
+}
+#mainApp{
+visibility:visible !important;
+height:auto !important;
+overflow:visible !important;
+}
+#mainApp{
+display:block !important;
+}
+
+#mainApp > *{
+display:none !important;
+}
+
+#baocao{
+display:block !important;
+}
+
+#baocao{
+position:relative;
+left:0;
+top:0;
+width:100%;
+background:white;
+overflow:visible !important;
+}
+
+/* hiện full table */
+.tableWrap{
+max-height:none !important;
+overflow:visible !important;
+}
+
+/* ẩn nút */
+button,
+.pagination,
+#searchBaoCao,
+#showHetTon{
+display:none !important;
+}
+
+/* table */
+table{
+width:100%;
+border-collapse:collapse;
+font-size:11px;
+table-layout:auto;
+page-break-inside:auto;
+}
+
+/* header */
+thead{
+display:table-header-group;
+}
+
+/* footer */
+tfoot{
+display:table-footer-group;
+}
+
+/* tránh vỡ dòng */
+tr{
+page-break-inside:avoid;
+page-break-after:auto;
+}
+
+/* FIX sticky lỗi */
+#tableBaoCao th,
+#tableBaoCao .tongRow,
+#tableBaoCao .tongRow td{
+position:static !important;
+top:auto !important;
+bottom:auto !important;
+z-index:auto !important;
+}
+
+/* style */
+th{
+background:#ddd !important;
+color:#000 !important;
+}
+
+th,td{
+border:1px solid #000 !important;
+padding:4px;
+text-align:center;
+}
+
+/* bỏ màu xen kẽ */
+tr:nth-child(even){
+background:white !important;
+}
+
+}
+
 /* ======================
    LOADING
 ====================== */
@@ -532,7 +641,9 @@ oninput="renderBaoCao()"
 <button onclick="downloadBaoCaoExcel()">
 ⬇️ Tải Excel
 </button>
-
+<button onclick="printBaoCao()">
+🖨️ In báo cáo
+</button>
 </div>
 
 </div>    <div class="tableWrap">
@@ -630,13 +741,15 @@ let cols = [
 "TỔNG TỒN"
 ];
 
-let header = table.insertRow();
+let thead = table.createTHead();
+let header = thead.insertRow();
 cols.forEach(c=>{
 let th = document.createElement("th");
 th.innerText = c;
 header.appendChild(th);
 });
-
+let tbody = document.createElement("tbody");
+table.appendChild(tbody);
 // ===== MAP =====
 let map = {};
 let idCount = {};
@@ -755,7 +868,7 @@ let tonHQ = x.nhapHQ - x.xuatHQ;
 let total = tonTQ + tonHQ;
 let tongNhap = x.nhapTQ + x.nhapHQ;
 let tongXuat = x.xuatTQ + x.xuatHQ;
-let r = table.insertRow();
+let r = tbody.insertRow();
 
 r.insertCell().innerText = ma;
 r.insertCell().innerText = x.ten;
@@ -797,7 +910,7 @@ totalSum.total += total;
 
 // ===== DÒNG TỔNG =====
 
-let r = table.insertRow();
+let r = tbody.insertRow();
 
 r.classList.add("tongRow"); // 👈 thêm dòng này
 
@@ -1459,6 +1572,18 @@ let wb = XLSX.utils.book_new();
 XLSX.utils.book_append_sheet(wb, ws, "BAO_CAO");
 
 XLSX.writeFile(wb, "BAO_CAO.xlsx");
+
+}
+function printBaoCao(){
+
+showTab(
+"baocao",
+document.querySelectorAll(".tabBtn")[3]
+);
+
+setTimeout(()=>{
+window.print();
+},300);
 
 }
 function renderPagination(
