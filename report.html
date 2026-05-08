@@ -65,10 +65,10 @@ border-collapse:collapse;
 
 #statTable th,
 #statTable td{
-padding:8px 4px;
-font-size:14px;
-}
-/* ======================
+padding:12px 8px;
+font-size:18px;
+font-weight:bold;
+}/* ======================
    BOX
 ====================== */
 
@@ -408,6 +408,18 @@ onclick="showTab('baocao',this)">
 <h3 id="totalNhap">
 Tổng thùng: 0
 </h3>
+<input
+id="searchNhap"
+type="text"
+placeholder="🔍 Tìm ID, MÃ, tên hàng..."
+oninput="renderNhapSearch()"
+style="
+padding:8px;
+border:1px solid #ccc;
+border-radius:6px;
+width:280px;
+"
+>
 </div>
 <div class="tableWrap">
 <table id="tableNhap"></table>
@@ -432,6 +444,18 @@ Tổng thùng: 0
 <h3 id="totalXuat">
 Tổng thùng: 0
 </h3>
+<input
+id="searchXuat"
+type="text"
+placeholder="🔍 Tìm ID, MÃ, tên hàng..."
+oninput="renderXuatSearch()"
+style="
+padding:8px;
+border:1px solid #ccc;
+border-radius:6px;
+width:280px;
+"
+>
 </div>
 <div class="tableWrap">
 <table id="tableXuat"></table>
@@ -459,6 +483,18 @@ Tổng thùng: 0
     <h3 id="totalTon">
       Tổng thùng tồn: 0
     </h3>
+<input
+id="searchTon"
+type="text"
+placeholder="🔍 Tìm ID, MÃ, tên hàng..."
+oninput="renderTon()"
+style="
+padding:8px;
+border:1px solid #ccc;
+border-radius:6px;
+width:280px;
+"
+>
 </div>
     <div class="tableWrap">
       <table id="tableTon"></table>
@@ -929,6 +965,38 @@ function renderTon(){
 
 let tonData = getTonData();
 
+// 🔍 SEARCH
+let keyword =
+document.getElementById("searchTon")?.value
+.toLowerCase()
+.trim() || "";
+
+if(keyword){
+
+tonData = tonData.filter(row =>
+
+(row.id || "")
+.toLowerCase()
+.includes(keyword)
+
+||
+
+(row.ma || "")
+.toLowerCase()
+.includes(keyword)
+
+||
+
+(row.ten || "")
+.toLowerCase()
+.includes(keyword)
+
+);
+
+}
+
+currentPageTon = 1;
+
 // render bảng tồn
 renderTable(
 tonData,
@@ -948,6 +1016,108 @@ tonData,
 
 // thống kê
 renderStats(tonData);
+
+}
+function renderNhapSearch(){
+
+let keyword =
+document.getElementById("searchNhap")?.value
+.toLowerCase()
+.trim() || "";
+
+let filtered = dataNhap;
+
+if(keyword){
+
+filtered = dataNhap.filter(row =>
+
+(row.id || "")
+.toLowerCase()
+.includes(keyword)
+
+||
+
+(row.ma || "")
+.toLowerCase()
+.includes(keyword)
+
+||
+
+(row.ten || "")
+.toLowerCase()
+.includes(keyword)
+
+);
+
+}
+
+currentPageNhap = 1;
+
+renderTable(
+filtered,
+"tableNhap",
+"totalNhap",
+currentPageNhap
+);
+
+renderPagination(
+filtered,
+"paginationNhap",
+"tableNhap",
+"totalNhap",
+"nhap"
+);
+
+}
+function renderXuatSearch(){
+
+let keyword =
+document.getElementById("searchXuat")?.value
+.toLowerCase()
+.trim() || "";
+
+let filtered = dataXuat;
+
+if(keyword){
+
+filtered = dataXuat.filter(row =>
+
+(row.id || "")
+.toLowerCase()
+.includes(keyword)
+
+||
+
+(row.ma || "")
+.toLowerCase()
+.includes(keyword)
+
+||
+
+(row.ten || "")
+.toLowerCase()
+.includes(keyword)
+
+);
+
+}
+
+currentPageXuat = 1;
+
+renderTable(
+filtered,
+"tableXuat",
+"totalXuat",
+currentPageXuat
+);
+
+renderPagination(
+filtered,
+"paginationXuat",
+"tableXuat",
+"totalXuat",
+"xuat"
+);
 
 }
 function renderStats(data){
@@ -1036,11 +1206,70 @@ table.innerHTML="";
 
 if(data.length===0)
 return;
-let start = (page - 1) * ROWS_PER_PAGE;
-let end = start + ROWS_PER_PAGE;
+let groupedData = [];
+let currentGroup = [];
 
-let pageData = data.slice(start,end);
+for(let i=0;i<data.length;i++){
 
+let row = data[i];
+
+if(
+currentGroup.length === 0 ||
+currentGroup[0].id === row.id
+){
+currentGroup.push(row);
+}
+else{
+groupedData.push(currentGroup);
+currentGroup = [row];
+}
+
+}
+
+if(currentGroup.length){
+groupedData.push(currentGroup);
+}
+
+// ===== CHIA PAGE KHÔNG CẮT ID =====
+
+let pages = [];
+let currentPage = [];
+let rowCount = 0;
+
+groupedData.forEach(group=>{
+
+if(rowCount + group.length > ROWS_PER_PAGE){
+
+pages.push(currentPage);
+
+currentPage = [];
+rowCount = 0;
+}
+
+currentPage.push(...group);
+rowCount += group.length;
+
+});
+
+if(currentPage.length){
+pages.push(currentPage);
+}
+
+let totalPages = pages.length || 1;
+
+if(page < 1){
+page = 1;
+}
+
+if(page > totalPages){
+page = totalPages;
+}
+let pageData = pages[page-1] || [];
+let startIndex = 0;
+
+for(let i=0;i<page-1;i++){
+startIndex += pages[i].length;
+}
 // HEADER
 
 let header=table.insertRow();
@@ -1076,10 +1305,9 @@ header.appendChild(th);
 // DATA
 
 let idCount = {};
-data.forEach(row=>{
+pageData.forEach(row=>{
 idCount[row.id] = (idCount[row.id] || 0) + 1;
 });
-
 let renderedID = new Set();
 let renderedThung = new Set(); 
 
@@ -1087,7 +1315,7 @@ pageData.forEach((row,index)=>{
 
 let tr=table.insertRow();
 
-tr.insertCell().innerText=start + index + 1;
+tr.insertCell().innerText=startIndex + index + 1;
 tr.insertCell().innerText=row.note || "";
 
 // ID merge
@@ -1241,9 +1469,50 @@ totalID,
 type
 ){
 
-let totalPages =
-Math.ceil(data.length / ROWS_PER_PAGE);
+let groupedData = [];
+let currentGroup = [];
 
+for(let i=0;i<data.length;i++){
+
+let row = data[i];
+
+if(
+currentGroup.length === 0 ||
+currentGroup[0].id === row.id
+){
+currentGroup.push(row);
+}
+else{
+groupedData.push(currentGroup);
+currentGroup = [row];
+}
+
+}
+
+if(currentGroup.length){
+groupedData.push(currentGroup);
+}
+
+let pages = [];
+let currentPageRows = 0;
+
+pages.push([]);
+
+groupedData.forEach(group=>{
+
+if(currentPageRows + group.length > ROWS_PER_PAGE){
+
+pages.push([]);
+currentPageRows = 0;
+}
+
+pages[pages.length-1].push(...group);
+
+currentPageRows += group.length;
+
+});
+
+let totalPages = pages.length || 1;
 let currentPage;
 
 if(type==="nhap"){
