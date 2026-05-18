@@ -1004,12 +1004,29 @@ loading.style.display="block";
 try{
 
 // LOAD NHẬP
-
 let resNhap =
 await fetch(API_URL+"?type=NHAP");
 
-dataNhap =
-await resNhap.json();
+let jsonNhap = await resNhap.json();
+
+console.log(jsonNhap);
+
+dataNhap = Array.isArray(jsonNhap)
+? jsonNhap
+: jsonNhap.data || [];
+
+// SẮP XẾP NGÀY MỚI -> CŨ
+dataNhap.sort((a,b)=>{
+
+const [monthA, dayA, yearA] = a.date.split("/");
+const [monthB, dayB, yearB] = b.date.split("/");
+
+const dateA = new Date(yearA, monthA-1, dayA);
+const dateB = new Date(yearB, monthB-1, dayB);
+
+return dateB - dateA;
+
+});
 
 renderTable(
 dataNhap,
@@ -1027,12 +1044,28 @@ dataNhap,
 );
 
 // LOAD XUẤT
-
 let resXuat =
 await fetch(API_URL+"?type=XUAT");
 
-dataXuat =
-await resXuat.json();
+let jsonXuat = await resXuat.json();
+
+console.log(jsonXuat);
+
+dataXuat = Array.isArray(jsonXuat)
+? jsonXuat
+: jsonXuat.data || [];
+
+dataXuat.sort((a,b)=>{
+
+const [monthA, dayA, yearA] = a.date.split("/");
+const [monthB, dayB, yearB] = b.date.split("/");
+
+const dateA = new Date(yearA, monthA-1, dayA);
+const dateB = new Date(yearB, monthB-1, dayB);
+
+return dateB - dateA;
+
+});
 
 renderTable(
 dataXuat,
